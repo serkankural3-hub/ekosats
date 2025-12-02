@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Uygulama barkod taramak için kamerayı kullanır.</string>
 </dict>
 </plist>

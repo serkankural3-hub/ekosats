@@ -1,0 +1,91 @@
+workflows:
+  ios-build:
+    name: Build iOS IPA
+    instance_type: mac_mini_m1
+    environment:
+      ios: latest
+      xcode: latest
+      cocoapods: default
+      vars:
+        XCODE_WORKSPACE: "ios/Runner.xcworkspace"
+        XCODE_SCHEME: "Runner"
+        BUNDLE_ID: "com.ekosats.app"
+    
+    scripts:
+      - name: Install Flutter dependencies
+        script: |
+          flutter pub get
+      
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios
+          pod install
+          cd ..
+      
+      - name: Build iOS IPA (No Code Sign)
+        script: |
+          flutter build ipa \
+            --release \
+            --no-codesign \
+            --build-number=$(($(date +%s) / 60))
+    
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/ipa/*.app
+    
+    publishing:
+      email:
+        recipients:
+          - $CODEMAGIC_EMAIL
+        notify:
+          success: true
+          failure: true
+      script: |
+        # Optional: Upload to Diawi
+        # curl -X POST https://upload.diawi.com/ \
+        #   -F "token=$DIAWI_TOKEN" \
+        #   -F "file=@build/ios/ipa/*.ipa" \
+        #   -F "find_by_udid=true" \
+        #   -F "wall_of_apps=true"
+
+  ios-build-signed:
+    name: Build iOS IPA (Signed - Optional)
+    instance_type: mac_mini_m1
+    environment:
+      ios: latest
+      xcode: latest
+      cocoapods: default
+      groups:
+        - apple_credentials
+      vars:
+        XCODE_WORKSPACE: "ios/Runner.xcworkspace"
+        XCODE_SCHEME: "Runner"
+        BUNDLE_ID: "com.ekosats.app"
+    
+    scripts:
+      - name: Install Flutter dependencies
+        script: |
+          flutter pub get
+      
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios
+          pod install
+          cd ..
+      
+      - name: Build iOS IPA (Signed)
+        script: |
+          flutter build ipa \
+            --release \
+            --build-number=$(($(date +%s) / 60))
+    
+    artifacts:
+      - build/ios/ipa/*.ipa
+    
+    publishing:
+      email:
+        recipients:
+          - $CODEMAGIC_EMAIL
+        notify:
+          success: true
+          failure: true
