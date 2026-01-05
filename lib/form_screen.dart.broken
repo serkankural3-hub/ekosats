@@ -1,0 +1,843 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+// item_model is not required here; using cart_records directly
+import 'package:ekosatsss/auth_service.dart';
+import 'package:ekosatsss/services/connectivity_service.dart';
+import 'package:ekosatsss/services/offline_cache_service.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:ekosatsss/list_screen.dart';
+
+class FormScreen extends StatefulWidget {
+  final String barcode;
+  final String userEmail;
+  final bool isReadOnly;
+  final bool isDescriptionOnlyEditable;
+  final String? fixedStatus; // Eğer null değilse bu durum alanı sabitlenecek ve düzenlenemez
+  final bool isAdmin; // Admin ise kayıtları düzenleyebilir
+
+  const FormScreen({super.key, required this.barcode, required this.userEmail, this.isReadOnly = false, this.isDescriptionOnlyEditable = false, this.fixedStatus, this.isAdmin = false});
+
+  @override
+  State<FormScreen> createState() => _FormScreenState();
+}
+
+class _FormScreenState extends State<FormScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _productQuantityController = TextEditingController();
+  final _workOrderController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _responsibleController = TextEditingController();
+  bool _isSaving = false;
+  bool _isLoading = true;
+  bool _forceReadOnly = false; // If true, disable all edits for non-admins when record exists
+  String? _selectedStatus;
+  String? _selectedCartType;
+  final List<String> _cartTypeOptions = ['Ekos', 'Ats'];
+  String? _selectedProductType;
+  final List<String> _productTypeOptions = [
+    'Bskv Klasik Nar Ateş (12mm)',
+    'Bskv Klasik Nar (15mm)',
+    'Bskv Klasik Nar Yeni Kalıp',
+    'Bskv Düz 25cm Ateş (12mm)',
+    'Köşe Klasik Nar Ateş (12mm)',
+    'Köşe Klasik Nar (15mm)',
+    'Cotto 40 x 40 x 1,5',
+    'Cotto 40 x 60 x 1,5',
+    'Cotto 30 x 60 x 1,5',
+    'Cotto 25 x 50 x 1,5',
+    'Cotto 30 x 30 x 3',
+    'Ekoton TC 30 x 60',
+    'Bskv Düz Avrasya 21,5 cm',
+    'Bskv Düz Avrasya 30 cm',
+    'KFN 50',
+    'KFN 30',
+    'KFN 20',
+    'An-65'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _responsibleController.text = widget.userEmail;
+    // Form hemen gösterilsin, veriler arka planda yüklensin
+    _determineModeAndLoad();
+  }
+
+  Future<void> _determineModeAndLoad() async {
+    // If fixedStatus provided (Pres/Laborant flow), set the status but allow creating new record.
+    if (widget.fixedStatus != null) {
+      _selectedStatus = widget.fixedStatus;
+      // Lab kullanıcısı için veriyi yükle
+      if (widget.isDescriptionOnlyEditable) {
+        await _loadItemData();
+      } else {
+        // Arka planda kaydı kontrol et ve yükle
+        try {
+          final doc = await FirebaseFirestore.instance.collection('cart_records').doc(widget.barcode).get();
+          if (doc.exists) {
+            // Existing record: non-admins cannot edit
+            final currentUser = FirebaseAuth.instance.currentUser?.uid;
+            String? role;
+            if (currentUser != null) role = await AuthService().getUserRole(currentUser);
+            if (role == null || role != 'admin') {
+              if (mounted) {
+                setState(() {
+                  _forceReadOnly = true;
+                });
+              }
+            }
+            await _loadItemData();
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+      // Verilerin yüklenmesini bekledikten sonra loading'i kapat
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    // If explicitly requested read-only or description-only editable, load data
+    if (widget.isReadOnly || widget.isDescriptionOnlyEditable) {
+      await _loadItemData();
+      return;
+    }
+
+    // Otherwise, for non-fixed forms: if existing doc, make non-admins read-only
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+    
+    // Eğer admin ise düzenlenebilir
+    if (widget.isAdmin) {
+      await _loadItemData();
+      return;
+    }
+    
+    try {
+      final doc = await FirebaseFirestore.instance.collection('cart_records').doc(widget.barcode).get();
+      if (doc.exists) {
+        // Existing record: check current user's role
+        final currentUser = FirebaseAuth.instance.currentUser?.uid;
+        String? role;
+        if (currentUser != null) role = await AuthService().getUserRole(currentUser);
+        if (role == null || role != 'admin') {
+          // default to read-only if role not found or not admin
+          if (mounted) {
+            setState(() {
+              _forceReadOnly = true;
+            });
+          }
+        }
+        await _loadItemData();
+      }
+    } catch (e) {
+      // ignore and proceed
+    }
+  }
+
+  Future<void> _loadItemData() async {
+    try {
+      DocumentSnapshot doc = await FirebaseFirestore.instance.collection('cart_records').doc(widget.barcode).get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        // Hem eski hem yeni alan adlarını kabul et
+        _selectedCartType = data['cartType'] ?? data['cart_type'] as String?;
+        _selectedProductType = data['productType'] ?? data['product_type'] ?? data['ürün'] as String?;
+        _productQuantityController.text = (data['productQuantity'] ?? data['product_quantity'] ?? '').toString();
+        _workOrderController.text = data['workOrder'] ?? data['work_order'] ?? '';
+        _descriptionController.text = data['description'] ?? '';
+        _responsibleController.text = data['createdBy'] ?? widget.userEmail;
+        _selectedStatus = data['status'] as String?;
+      }
+    } catch (e) {
+      // Hata durumunda formu boş bırak
+    }
+    setState(() => _isLoading = false);
+  }
+
+  Future<void> _saveForm() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    // Laborant rolü sadece açıklamayı günceller
+    if (widget.isDescriptionOnlyEditable) {
+      await _updateDescription();
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+      return;
+    }
+    final connectivity = Provider.of<ConnectivityService>(context, listen: false);
+    final cache = Provider.of<OfflineCacheService>(context, listen: false);
+
+    // Kaydedilecek veri
+    final statusToSave = widget.fixedStatus ?? _selectedStatus ?? '';
+    final now = DateTime.now();
+    final payload = {
+      'cartNumber': widget.barcode,
+      'cartType': _selectedCartType ?? '',
+      'productType': _selectedProductType ?? '',
+      'dateTime': Timestamp.fromDate(now),
+      'status': statusToSave,
+      'productQuantity': int.tryParse(_productQuantityController.text) ?? 0,
+      'workOrder': _workOrderController.text,
+      'description': _descriptionController.text,
+      'createdBy': widget.userEmail,
+      'createdAt': Timestamp.fromDate(now),
+    };
+
+    try {
+      final isOnline = await connectivity.checkConnectivity();
+
+      if (isOnline) {
+        await FirebaseFirestore.instance.collection('cart_records').doc(widget.barcode).set(payload);
+        // Cache için Timestamp'ı int'e çevir
+        final cachePayload = Map<String, dynamic>.from(payload);
+        cachePayload['dateTime'] = now.millisecondsSinceEpoch;
+        cachePayload['createdAt'] = now.millisecondsSinceEpoch;
+        await cache.cacheRecord(widget.barcode, cachePayload);
+      } else {
+        // Çevrimdışı: kuyruğa al ve local cache'e yaz
+        final cachePayload = Map<String, dynamic>.from(payload);
+        cachePayload['dateTime'] = now.millisecondsSinceEpoch;
+        cachePayload['createdAt'] = now.millisecondsSinceEpoch;
+        await cache.cacheRecord(widget.barcode, cachePayload);
+        await cache.addPendingOperation(
+          operation: 'set',
+          collection: 'cart_records',
+          documentId: widget.barcode,
+          data: cachePayload,
+        );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isOnline ? 'Kaydedildi' : 'Çevrimdışı kaydedildi, bağlantıda senkronlanacak', style: TextStyle(color: Colors.white)),
+            backgroundColor: isOnline ? Theme.of(context).primaryColor : Colors.orange,
+          ),
+        );
+        // Direkt ListScreen'e yönlendir
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ListScreen()));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hata: $e', style: TextStyle(color: Colors.white)),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveLabNote() async {
+    final note = _descriptionController.text.trim();
+    if (note.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Not boş olamaz'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      await FirebaseFirestore.instance
+          .collection('cart_records')
+          .doc(widget.barcode)
+          .update({
+        'description': note,
+        'descriptionHistory': FieldValue.arrayUnion([
+          {
+            'text': note,
+            'addedBy': widget.userEmail,
+            'addedAt': Timestamp.now(),
+          }
+        ]),
+        'lastDescriptionUpdate': Timestamp.now(),
+      });
+
+      _descriptionController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Not kaydedildi'), backgroundColor: Colors.green),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _updateDescription() async {
+    final newDescription = _descriptionController.text.trim();
+    
+    if (newDescription.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Açıklama boş bırakılamaz'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Tüm durumlar için açıklamayı doğru alanda kaydet
+      await FirebaseFirestore.instance
+          .collection('cart_records')
+          .doc(widget.barcode)
+          .update({
+        'description': newDescription,
+        'descriptionHistory': FieldValue.arrayUnion([
+          {
+            'text': newDescription,
+            'addedBy': widget.userEmail,
+            'addedAt': Timestamp.now(),
+          }
+        ]),
+        'lastDescriptionUpdate': Timestamp.now(),
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Açıklama kaydedildi', style: TextStyle(color: Colors.white)),
+            backgroundColor: Colors.purple[700],
+          ),
+        );
+        _descriptionController.clear();
+        setState(() {});
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hata: $e', style: TextStyle(color: Colors.white)),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      // _isSaving durumu ana _saveForm içinde yönetiliyor.
+    }
+  }
+
+  void _showConfirmationDialog() {
+    if (_formKey.currentState!.validate()) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Kaydı Onayla'),
+            content: const Text('Girilen bilgileri kaydetmek istediğinizden emin misiniz?'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('İptal'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              TextButton(
+                child: const Text('Onayla'),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Dialog'ı kapat
+                  _saveForm(); // Form'ı kaydet
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Lab kullanıcısı kontrolü: email veya isDescriptionOnlyEditable flag'i ile
+    final bool isLabUser = widget.isDescriptionOnlyEditable && widget.fixedStatus == 'Yaş İmalat';
+    
+    // Lab kullanıcısı için - Firestore'dan veri çek
+    if (isLabUser) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Barkod: ${widget.barcode}'),
+          backgroundColor: Colors.purple[700],
+        ),
+        body: FutureBuilder<DocumentSnapshot>(
+          future: FirebaseFirestore.instance.collection('cart_records').doc(widget.barcode).get(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+            
+            if (!snapshot.hasData || !snapshot.data!.exists) {
+              return Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text('Barkod ${widget.barcode} için kayıt bulunamadı', textAlign: TextAlign.center),
+                ),
+              );
+            }
+            
+            final data = snapshot.data!.data() as Map<String, dynamic>;
+            final productType = data['productType'] ?? data['product_type'] ?? '-';
+            final workOrder = data['workOrder'] ?? data['work_order'] ?? '-';
+            final quantity = data['productQuantity'] ?? data['product_quantity'] ?? '-';
+            
+            return SingleChildScrollView(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Kayıt Bilgileri', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.purple[700])),
+                          SizedBox(height: 12),
+                          Text('Ürün: $productType', style: TextStyle(fontSize: 16)),
+                          Text('İş Emri: $workOrder', style: TextStyle(fontSize: 16)),
+                          Text('Miktar: $quantity', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 24),
+                  Text('Laboratuvar Notu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 8),
+                  TextField(
+                    controller: _descriptionController,
+                    maxLines: 5,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Notu yazın...',
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: _isSaving ? null : _saveLabNote,
+                    icon: Icon(Icons.save),
+                    label: Text(_isSaving ? 'Kaydediliyor...' : 'Notu Kaydet'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(double.infinity, 50),
+                      backgroundColor: Colors.purple[700],
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+    }
+    
+    // Normal form (Pres ve diğer kullanıcılar için)
+                          },
+                          icon: _isSaving 
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Icon(Icons.save),
+                          label: Text(
+                            _isSaving ? 'Kaydediliyor...' : 'Notu Kaydet',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        // Önceki notları göster
+                        StreamBuilder<DocumentSnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('cart_records')
+                              .doc(widget.barcode)
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData || !snapshot.data!.exists) {
+                              return SizedBox.shrink();
+                            }
+                            
+                            final data = snapshot.data!.data() as Map<String, dynamic>?;
+                            final labNotes = data?['labNotes'] as Map<String, dynamic>?;
+                            
+                            if (labNotes == null || labNotes.isEmpty) {
+                              return SizedBox.shrink();
+                            }
+                            
+                            // Sadece bu kullanıcının notlarını filtrele
+                            final userNotes = labNotes.entries
+                                .where((entry) {
+                                  final note = entry.value as Map<String, dynamic>?;
+                                  return note?['addedBy'] == widget.userEmail;
+                                })
+                                .toList()
+                              ..sort((a, b) {
+                                final aTime = (a.value as Map<String, dynamic>)['timestamp'] as Timestamp?;
+                                final bTime = (b.value as Map<String, dynamic>)['timestamp'] as Timestamp?;
+                                if (aTime == null || bTime == null) return 0;
+                                return bTime.compareTo(aTime);
+                              });
+                            
+                            if (userNotes.isEmpty) {
+                              return SizedBox.shrink();
+                            }
+                            
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Divider(),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Önceki Notlarınız:',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: Colors.purple[900],
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                ...userNotes.take(3).map((entry) {
+                                  final note = entry.value as Map<String, dynamic>;
+                                  final text = note['note'] ?? '';
+                                  final timestamp = note['timestamp'] as Timestamp?;
+                                  final date = timestamp?.toDate();
+                                  final dateStr = date != null
+                                      ? '${date.day}.${date.month}.${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}'
+                                      : '';
+                                  
+                                  return Container(
+                                    margin: EdgeInsets.only(bottom: 8),
+                                    padding: EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[100],
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(text, style: TextStyle(fontSize: 13)),
+                                        SizedBox(height: 4),
+                                        Text(
+                                          dateStr,
+                                          style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    
+    // Normal kullanıcılar için mevcut form
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: Text('Araba Barkod: ${widget.barcode}'),
+        backgroundColor: Colors.green[400],
+        foregroundColor: Colors.white,
+        elevation: 2,
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Theme.of(context).primaryColor.withOpacity(0.8),
+              Theme.of(context).primaryColor,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: _isLoading
+        ? const Center(child: CircularProgressIndicator(color: Colors.white))
+        : Padding(
+          padding: EdgeInsets.only(top: AppBar().preferredSize.height + MediaQuery.of(context).padding.top + 16.0, left: 16.0, right: 16.0),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              children: [
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      children: [
+                        DropdownButtonFormField<String>(
+                          initialValue: _selectedCartType,
+                          onChanged: widget.isReadOnly || widget.isDescriptionOnlyEditable || _forceReadOnly ? null : (newValue) {
+                            setState(() {
+                              _selectedCartType = newValue;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Araba Çeşidi',
+                            prefixIcon: Icon(Icons.car_rental, color: Theme.of(context).primaryColor),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
+                            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2.0), borderRadius: BorderRadius.circular(10.0)),
+                          ),
+                          items: _cartTypeOptions.map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          validator: (value) {
+                            return value == null ? 'Lütfen bir araba çeşidi seçiniz' : null;
+                          },
+                        ),
+                        SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          initialValue: _selectedProductType,
+                          onChanged: widget.isReadOnly || widget.isDescriptionOnlyEditable || _forceReadOnly ? null : (newValue) {
+                            setState(() {
+                              _selectedProductType = newValue;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Ürün Çeşidi',
+                            prefixIcon: Icon(Icons.category, color: Theme.of(context).primaryColor),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
+                            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2.0), borderRadius: BorderRadius.circular(10.0)),
+                          ),
+                          items: _productTypeOptions.map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          validator: (value) {
+                            return value == null ? 'Lütfen bir ürün çeşidi seçiniz' : null;
+                          },
+                        ),
+                        SizedBox(height: 16),
+                        // Durum alanı: eğer fixedStatus verilmişse salt okunur göster, aksi halde düzenlenebilir dropdown
+                        if (widget.fixedStatus != null)
+                          TextFormField(
+                            initialValue: widget.fixedStatus,
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              labelText: 'Durum',
+                              prefixIcon: Icon(Icons.info, color: Theme.of(context).primaryColor),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
+                            ),
+                          )
+                        else
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedStatus,
+                            decoration: InputDecoration(
+                              labelText: 'Durum',
+                              prefixIcon: Icon(Icons.info, color: Theme.of(context).primaryColor),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
+                            ),
+                            items: <String>['Yaş İmalat', 'Kurutmaya Gitti', 'Pişirmede', 'Pişti', 'Sevkiyat']
+                                .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                                .toList(),
+                            onChanged: widget.isReadOnly || widget.isDescriptionOnlyEditable || _forceReadOnly ? null : (v) => setState(() => _selectedStatus = v),
+                            validator: (v) => v == null || v.isEmpty ? 'Lütfen durum seçin' : null,
+                          ),
+                        TextFormField(
+                          readOnly: widget.isReadOnly || widget.isDescriptionOnlyEditable || _forceReadOnly,
+                          controller: _productQuantityController,
+                          decoration: InputDecoration(
+                            labelText: 'Ürün Adedi',
+                            prefixIcon: Icon(Icons.production_quantity_limits, color: Theme.of(context).primaryColor),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
+                            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2.0), borderRadius: BorderRadius.circular(10.0)),
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Lütfen ürün adedini giriniz';
+                            }
+                            if (int.tryParse(value) == null) {
+                              return 'Lütfen geçerli bir sayı giriniz';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 16),
+                        TextFormField(
+                          readOnly: widget.isReadOnly || widget.isDescriptionOnlyEditable || _forceReadOnly,
+                          controller: _workOrderController,
+                          decoration: InputDecoration(
+                            labelText: 'İş Emri',
+                            prefixIcon: Icon(Icons.assignment, color: Theme.of(context).primaryColor),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
+                            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2.0), borderRadius: BorderRadius.circular(10.0)),
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        TextFormField(
+                          readOnly: widget.isReadOnly || _forceReadOnly, // Laborant düzenleyebileceği için sadece isReadOnly kontrolü
+                          controller: _descriptionController,
+                          decoration: InputDecoration(
+                            labelText: 'Açıklama',
+                            prefixIcon: Icon(Icons.description, color: Theme.of(context).primaryColor),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
+                            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2.0), borderRadius: BorderRadius.circular(10.0)),
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        // Açıklama History
+                        StreamBuilder<DocumentSnapshot>(
+                          stream: FirebaseFirestore.instance.collection('cart_records').doc(widget.barcode).snapshots(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return const SizedBox.shrink();
+                            }
+                            
+                            final data = snapshot.data?.data() as Map<String, dynamic>?;
+                            final history = (data?['descriptionHistory'] as List?) ?? [];
+                            
+                            if (history.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            
+                            return Card(
+                              elevation: 2,
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Kaydedilen Açıklamalar',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                    SizedBox(height: 8),
+                                    ...List.generate(history.length, (index) {
+                                      final item = history[index] as Map<String, dynamic>;
+                                      final text = item['text'] ?? '';
+                                      final addedBy = item['addedBy'] ?? 'Bilinmeyen';
+                                      final addedAt = item['addedAt'] as Timestamp?;
+                                      final formattedDate = addedAt != null
+                                          ? '${addedAt.toDate().day}/${addedAt.toDate().month}/${addedAt.toDate().year} ${addedAt.toDate().hour}:${addedAt.toDate().minute.toString().padLeft(2, '0')}'
+                                          : 'Tarih Bilinmiyor';
+                                      
+                                      return Padding(
+                                        padding: const EdgeInsets.only(bottom: 8),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[100],
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                text,
+                                                style: const TextStyle(fontSize: 13),
+                                              ),
+                                              SizedBox(height: 4),
+                                              Text(
+                                                '$addedBy - $formattedDate',
+                                                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        SizedBox(height: 16),
+                        TextFormField(
+                          controller: _responsibleController,
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: 'Sorumlu',
+                            prefixIcon: Icon(Icons.person, color: Theme.of(context).primaryColor),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
+                            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2.0), borderRadius: BorderRadius.circular(10.0)),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Lütfen sorumlu kişiyi giriniz';
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 30),
+                if (!widget.isReadOnly && !_forceReadOnly) // Kaydet butonu isDescriptionOnlyEditable için de görünür olmalı
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                      textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: _isSaving ? null : _showConfirmationDialog,
+                    child: _isSaving ? const CircularProgressIndicator(color: Colors.white) : const Text('Kaydet'),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

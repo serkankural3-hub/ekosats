@@ -1,0 +1,394 @@
+═══════════════════════════════════════════════════════════════
+                    EKOSATS ARABA TAKİP SİSTEMİ
+                       TANITIM SUNUMU İÇERİĞİ
+═══════════════════════════════════════════════════════════════
+
+📌 Her slayt için başlık ve maddeleri direkt PowerPoint'e kopyalayın
+
+
+══════════════════════════════════════════════════════════════
+SLAYT 1: KAPAK
+══════════════════════════════════════════════════════════════
+
+Başlık: EKOSATS ARABA TAKİP SİSTEMİ
+
+Alt başlık: Üretim Süreçlerini Dijitalleştiren Akıllı Yönetim Platformu
+
+Tarih: 8 Aralık 2025
+
+
+══════════════════════════════════════════════════════════════
+SLAYT 2: PROJE HAKKINDA
+══════════════════════════════════════════════════════════════
+
+Başlık: Proje Özeti
+
+• Üretim süreçlerini takip eden dijital yönetim sistemi
+• Barkod bazlı kayıt ve izleme sistemi
+• Çoklu kullanıcı rolü ve yetki yönetimi
+• Gerçek zamanlı veri senkronizasyonu
+• Çok platformlu kullanım (Windows + Android)
+
+
+══════════════════════════════════════════════════════════════
+SLAYT 3: TEMEL ÖZELLİKLER
+══════════════════════════════════════════════════════════════
+
+Başlık: Sistemin Ana Özellikleri
+
+✓ Barkod okuma ve kayıt sistemi
+✓ Rol bazlı kullanıcı yönetimi (4 farklı rol)
+✓ Gerçek zamanlı veri senkronizasyonu
+✓ Detaylı açıklama ve not sistemi
+✓ Excel'e aktarma ve raporlama
+✓ Fırın ve kartuş takip modülleri
+✓ Laboratuvar not yönetimi sistemi
+
+
+══════════════════════════════════════════════════════════════
+SLAYT 4: KULLANICI ROLLERİ
+══════════════════════════════════════════════════════════════
+
+Başlık: Kullanıcı Rolleri ve Yetkileri
+
+1. PRES SORUMLUSU
+   • Yeni kayıt oluşturma
+   • Barkod okuma ve form doldurma
+   • Tüm alanlara erişim
+
+2. FIRIN SORUMLUSU
+   • Fırın kayıtları oluşturma
+   • Fırın takip modülü erişimi
+   • Durum güncelleme
+
+3. LABORANT
+   • Barkod okuma (sadece not ekleme)
+   • Kendi notlarını görüntüleme
+   • "Kayıtlarım" özel sekmesi
+
+4. ADMİN
+   • Tüm kayıtları görüntüleme
+   • Excel'e aktarma
+   • Kullanıcı yönetimi
+   • Lab notlarını görüntüleme
+
+
+══════════════════════════════════════════════════════════════
+SLAYT 5: PRES SORUMLUSU MODÜLLERİ
+══════════════════════════════════════════════════════════════
+
+Başlık: Pres Sorumlusu İş Akışı
+
+📋 KAYIT OLUŞTURMA
+• Barkod okutma veya manuel giriş
+• Ürün türü: Kaporta / Motor Kapağı / Diğer
+• İş emri ve adet bilgisi
+• Durum seçimi (12 farklı durum)
+• Açıklama ekleme
+
+📊 LİSTE GÖRÜNTÜLEME
+• Oluşturulan kayıtları görüntüleme
+• Durum bazlı filtreleme
+• Detaylı bilgi erişimi
+
+🔍 BARKOD OKUTMA
+• Hızlı kayıt açma
+• Anlık düzenleme
+• Tarihçe görüntüleme
+
+
+══════════════════════════════════════════════════════════════
+SLAYT 6: FIRIN MODÜLLERİ
+══════════════════════════════════════════════════════════════
+
+Başlık: Fırın Sorumlusu Özellikleri
+
+🔥 FIRIN KAYITLARI
+• Fırın adı ve giriş saati
+• Çıkış saati takibi
+• Süre hesaplama (otomatik)
+• Durum güncelleme
+
+📋 KARTUŞ TAKİBİ
+• Kartuş türü: Kaporta / Motor Kapağı
+• Asılma zamanı kaydı
+• İndirme zamanı takibi
+• Süre hesaplama
+
+📊 LİSTE VE RAPORLAMA
+• Fırın kayıtlarını listeleme
+• Kartuş takip listesi
+• Detaylı bilgi görüntüleme
+
+
+══════════════════════════════════════════════════════════════
+SLAYT 7: LABORATUVAR SİSTEMİ (YENİ ÖZELLİK)
+══════════════════════════════════════════════════════════════
+
+Başlık: Laboratuvar Not Yönetimi
+
+🔬 LABORANT KULLANICI (lab@ekos.com)
+
+ÖZEL İŞ AKIŞI:
+• Barkod okutma → Sadece not ekleme ekranı açılır
+• Mevcut kayıt bilgileri gösterilir (değiştirilemez)
+• Sadece açıklama/not yazabilir
+• Önceki notlarını görebilir (son 3 not)
+
+"KAYITLARIM" SEKMESİ:
+• Laboratuvar kullanıcısına özel ekran
+• Sadece kendi eklediği notları görüntüler
+• Not sayısı ve detay bilgisi
+• Zaman damgalı not geçmişi
+
+ADMİN ENTEGRASYONU:
+• Lab notları kayıtlarda görünür (mor kutucuk)
+• Excel'e "Lab Notları" kolonu eklendi
+• Tarih, kullanıcı ve not bilgisi formatlanmış
+
+
+══════════════════════════════════════════════════════════════
+SLAYT 8: ADMİN PANELİ
+══════════════════════════════════════════════════════════════
+
+Başlık: Yönetim ve Raporlama
+
+📊 KAYIT YÖNETİMİ
+• Tüm kayıtları görüntüleme
+• Filtreleme ve arama
+• Detaylı düzenleme yetkisi
+• Lab notlarını görüntüleme (mor kutucuklar)
+
+📈 EXCEL RAPORLAMA
+• Tüm veriler Excel'e aktarılabilir
+• Özel kolonlar: Barkod, Ürün Türü, İş Emri, Durum, Açıklama, Lab Notları
+• Tarih formatlaması
+• Otomatik sütun genişliği ayarı
+
+👥 KULLANICI YÖNETİMİ
+• Yeni kullanıcı ekleme
+• Rol atama (Pres/Fırın/Laborant/Admin)
+• Kullanıcı silme/düzenleme
+
+
+══════════════════════════════════════════════════════════════
+SLAYT 9: TEKNİK ALTYAPı
+══════════════════════════════════════════════════════════════
+
+Başlık: Teknoloji ve Altyapı
+
+🚀 KULLANILAN TEKNOLOJİLER
+
+• Flutter Framework (Google)
+  - Modern, hızlı, güçlü
+  - Tek kod tabanı, çoklu platform
+
+• Firebase Cloud Firestore
+  - Gerçek zamanlı veritabanı
+  - Otomatik senkronizasyon
+  - Bulut tabanlı güvenli saklama
+
+• Firebase Authentication
+  - Güvenli giriş sistemi
+  - E-posta bazlı yetkilendirme
+
+• Barkod Okuma Sistemi
+  - Kamera entegrasyonu
+  - Hızlı okuma algoritması
+
+
+══════════════════════════════════════════════════════════════
+SLAYT 10: ÇOKLU PLATFORM DESTEĞİ
+══════════════════════════════════════════════════════════════
+
+Başlık: Platform Desteği
+
+💻 WINDOWS MASAÜSTÜ
+• Tam özellikli uygulama
+• Boyut: ~172 MB
+• Kurulum gerektirmez (Portable)
+• Hızlı çalışma
+
+📱 ANDROİD MOBİL
+• Tam özellikli uygulama
+• Boyut: ~72 MB
+• Kamera ile barkod okuma
+• Mobil optimizasyonu
+
+🌐 GELECEK PLATFORMLAR
+• iOS (iPhone/iPad)
+• Web Tarayıcı
+• macOS
+• Linux
+
+
+══════════════════════════════════════════════════════════════
+SLAYT 11: GERÇEK ZAMANLI SENKRONİZASYON
+══════════════════════════════════════════════════════════════
+
+Başlık: Çoklu Cihaz Senkronizasyonu
+
+🌐 NASIL ÇALIŞIR?
+
+Cihaz 1 (Pres)     →
+Cihaz 2 (Fırın)    →  Firebase Cloud  →  Tüm Cihazlar
+Cihaz 3 (Lab)      →   (Merkezi DB)   →  (Anlık Güncelleme)
+Cihaz 4-8          →
+
+✓ 7-8 cihaz eşzamanlı kullanılabilir
+✓ Bir cihazda yapılan değişiklik anında diğerlerine yansır
+✓ Yenile butonu gerektirmez (otomatik)
+✓ İnternet bağlantısı gerekli
+✓ Çevrimdışı mod: Yerel önbellekleme
+
+
+══════════════════════════════════════════════════════════════
+SLAYT 12: AVANTAJLAR
+══════════════════════════════════════════════════════════════
+
+Başlık: Sistemin Sağladığı Faydalar
+
+✅ HIZLI VE PRATİK
+• Barkod ile anlık kayıt
+• Kullanıcı dostu arayüz
+• Mobil erişim
+
+✅ GÜÇLÜ TAKİP
+• Her aşama kaydedilir
+• Detaylı not sistemi
+• Tarihçe görüntüleme
+
+✅ RAPORLAMA
+• Excel'e hızlı aktarım
+• Özelleştirilebilir kolonlar
+• Filtreleme özellikleri
+
+✅ GÜVENLİK
+• Rol bazlı yetkilendirme
+• Firebase güvenlik kuralları
+• Kullanıcı bazlı erişim kontrolü
+
+✅ ÖLÇEKLENEBİLİR
+• Sınırsız kayıt kapasitesi
+• Çoklu cihaz desteği
+• Bulut altyapısı
+
+
+══════════════════════════════════════════════════════════════
+SLAYT 13: KULLANIM SENARYOLARı
+══════════════════════════════════════════════════════════════
+
+Başlık: Örnek Kullanım Senaryoları
+
+SENARYO 1: PRES İŞLEMİ
+1. Pres sorumlusu barkod okuttur
+2. Ürün bilgilerini doldurur
+3. Durum: "Pres Imalat" seçilir
+4. Kayıt oluşturulur → Tüm cihazlarda görünür
+
+SENARYO 2: FIRIN TAKİBİ
+1. Fırın sorumlusu ürünü fırına koyar
+2. Giriş saatini kaydeder
+3. Çıkış saatini günceller
+4. Sistem otomatik süre hesaplar
+
+SENARYO 3: LABORATUVAR ANALİZİ
+1. Laborant barkod okuttur
+2. Özel not ekleme ekranı açılır
+3. Analiz sonucunu yazar
+4. Notu kaydet → Admin görebilir
+5. "Kayıtlarım" sekmesinden kendi notlarına erişir
+
+SENARYO 4: ADMİN RAPORLAMA
+1. Admin tüm kayıtları görüntüler
+2. Lab notlarını inceler (mor kutucuklar)
+3. Excel'e aktar tıklar
+4. Tüm veriler formatlanmış şekilde indirilir
+
+
+══════════════════════════════════════════════════════════════
+SLAYT 14: GÜVENLİK VE YETKİLENDİRME
+══════════════════════════════════════════════════════════════
+
+Başlık: Güvenlik Özellikleri
+
+🔐 KULLANICI GÜVENLİĞİ
+• E-posta ve şifre ile giriş
+• Firebase Authentication
+• Şifreli veri iletişimi
+
+🛡️ VERİ GÜVENLİĞİ
+• Firebase güvenlik kuralları
+• Rol bazlı erişim kontrolü
+• Otomatik yedekleme
+
+👤 YETKİ SİSTEMİ
+• Her kullanıcı sadece yetkili olduğu modüllere erişir
+• Laborant sadece not ekler, kayıt oluşturamaz
+• Admin tam yetki, diğerleri kısıtlı
+
+📊 VERİ BÜTÜNLÜĞÜ
+• Tüm değişiklikler loglanır
+• Tarih damgası sistemi
+• Kullanıcı bazlı takip
+
+
+══════════════════════════════════════════════════════════════
+SLAYT 15: KAPANIŞ VE SONUÇ
+══════════════════════════════════════════════════════════════
+
+Başlık: Özet ve Sonuç
+
+EKOSATS ARABA TAKİP SİSTEMİ
+
+✓ Modern ve kullanıcı dostu
+✓ Güçlü teknik altyapı
+✓ Çoklu platform desteği
+✓ Gerçek zamanlı senkronizasyon
+✓ Rol bazlı yetkilendirme
+✓ Laboratuvar entegrasyonu
+✓ Detaylı raporlama sistemi
+
+📦 HAZIR DURUM:
+• Windows sürümü: Kullanıma hazır
+• Android APK: Test edildi
+• 7-8 cihaz eşzamanlı çalışabilir
+
+🎯 HEDEF:
+Üretim süreçlerini dijitalleştirerek verimlilik artışı
+
+
+══════════════════════════════════════════════════════════════
+                            NOTLAR
+══════════════════════════════════════════════════════════════
+
+PowerPoint'e Aktarma İpuçları:
+1. Her slayt için yeni bir PowerPoint slaytı açın
+2. Başlıkları büyük puntoyla yazın (örn: 44 punto)
+3. Maddeleri uygun puntoyla yazın (örn: 24 punto)
+4. Emoji/ikonları PowerPoint'te simge olarak ekleyebilirsiniz
+5. Renk teması: Mavi-Mor tonları kullanılabilir
+6. Arka plan: Beyaz veya açık gri
+7. Her slaytta 5-7 madde yeterli (çok fazla yazı kalabalığı yapmayın)
+
+Görsel Öneriler:
+• Slayt 1: Logo ekleyin
+• Slayt 3: Ekran görüntüleri
+• Slayt 4: Kullanıcı simgeleri
+• Slayt 10: Platform logoları (Windows/Android)
+• Slayt 11: Senkronizasyon diyagramı
+• Slayt 15: Teşekkür görseli
+
+Animasyon Önerileri:
+• Başlıklar: "Fade In" efekti
+• Maddeler: "Fly In" sıralı animasyon
+• Geçişler: "Push" veya "Fade" kullanın
+
+Süre Tahmini:
+• Hızlı sunum: 10-12 dakika
+• Detaylı sunum: 15-20 dakika
+• Soru-cevap: +5 dakika
+
+═══════════════════════════════════════════════════════════════
+                         İYİ SUNUMLAR! 🎉
+═══════════════════════════════════════════════════════════════

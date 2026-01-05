@@ -1,0 +1,29 @@
+import 'package:flutter/material.dart';
+
+class ReportsAnalyticsScreen extends StatelessWidget {
+  const ReportsAnalyticsScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Raporlar ve Analiz'),
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Üretim'),
+              Tab(text: 'Genel'),
+            ],
+          ),
+        ),
+        body: const TabBarView(
+          children: [
+            Center(child: Text('Üretim analiz alanı')),
+            Center(child: Text('Genel raporlar')),
+          ],
+        ),
+      ),
+    );
+  }
+}

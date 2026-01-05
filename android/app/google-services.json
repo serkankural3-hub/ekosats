@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "896977967332",
+    "project_id": "ekosatsss",
+    "storage_bucket": "ekosatsss.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:896977967332:android:3f7be56b2bb6afd6bf34f1",
+        "android_client_info": {
+          "package_name": "com.example.ekosatsss"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBGTo05CLfG0oQKR4dbO3V7fwWwYR841Go"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
